@@ -9,7 +9,6 @@
 #import "DlibWrapper.h"
 #import <UIKit/UIKit.h>
 
-//#include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing.h>
 #include <dlib/image_io.h>
 
@@ -21,7 +20,6 @@
 
 @end
 @implementation DlibWrapper {
-   // dlib::frontal_face_detector detector;
     dlib::shape_predictor sp;
 }
 
@@ -38,7 +36,6 @@
     NSString *modelFileName = [[NSBundle mainBundle] pathForResource:@"shape_predictor_68_face_landmarks" ofType:@"dat"];
     std::string modelFileNameCString = [modelFileName UTF8String];
     
-   // detector = dlib::get_frontal_face_detector();
     dlib::deserialize(modelFileNameCString) >> sp;
     
     // FIXME: test this stuff for memory leaks (cpp object destruction)
@@ -46,8 +43,6 @@
 }
 
 - (void)doWorkOnSampleBuffer:(CMSampleBufferRef)sampleBuffer inRects:(NSArray<NSValue *> *)rects {
-
-//-(void)doWorkOnSampleBuffer:(CMSampleBufferRef)sampleBuffer {
     
     if (!self.prepared) {
         [self prepare];
@@ -112,14 +107,6 @@
         }
     }
     
-//    for (unsigned long j = 0; j < dets.size(); ++j) {
-//        dlib::full_object_detection shape = sp(img, dets[j]);
-//
-//        for (unsigned long k = 0; k < shape.num_parts(); k++) {
-//            dlib::point p = shape.part(k);
-//            draw_solid_circle(img, p, 3, dlib::rgb_pixel(0, 255, 255));
-//        }
-//    }
     
     // lets put everything back where it belongs
     CVPixelBufferLockBaseAddress(imageBuffer, 0);

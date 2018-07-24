@@ -49,7 +49,7 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     // File Manager
     func videoFileLocation() -> URL {
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
-        let videoOutputUrl = URL(fileURLWithPath: documentsPath.appendingPathComponent("videoFile")).appendingPathExtension("mov")
+        let videoOutputUrl = URL(fileURLWithPath: documentsPath.appendingPathComponent("videoFile")).appendingPathExtension("mp4")
         do {
             if FileManager.default.fileExists(atPath: videoOutputUrl.path) {
                 try FileManager.default.removeItem(at: videoOutputUrl)
@@ -93,12 +93,11 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
                     session.addOutput(videoDataOutput)
                 }
                 
-                // define audio output *** THIS IS THE BLOCK OF CODE RESULTING IN CRASH ***
-                if session.canAddOutput(audioDataOutput) {
-                    audioDataOutput.setSampleBufferDelegate(self, queue: sampleQueue)
-                    session.addOutput(audioDataOutput)
-                    print("audiodataoutput added")
-                }
+//                if session.canAddOutput(audioDataOutput) {
+//                    audioDataOutput.setSampleBufferDelegate(self, queue: sampleQueue)
+//                    session.addOutput(audioDataOutput)
+//                    print("audiodataoutput added")
+//                }
                 
                 // define metadata output
                 if session.canAddOutput(metaOutput) {
@@ -177,9 +176,9 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey : AVVideoCodecType.h264,
                 AVVideoWidthKey : 720,
-                AVVideoHeightKey : 1280,
+                AVVideoHeightKey : 853,
                 AVVideoCompressionPropertiesKey : [
-                    AVVideoAverageBitRateKey : 2300000,
+                    AVVideoAverageBitRateKey : 500000,
                 ],
                 ])
             
@@ -284,12 +283,11 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
 //        let bufferFrame = CMVideoFormatDescriptionGetCleanAperture(desc!, false)
         
         if output == videoDataOutput {
-            print("videodata")
+            //print("videodata")
             if !currentMetadata.isEmpty {
                 let boundsArray = currentMetadata
                     .compactMap { $0 as? AVMetadataFaceObject }
                     .map { (faceObject) -> NSValue in
-                        // *** CONVERTEDOBJECT IS PRODUCING A FATAL ERROR AS IT'S NIL ***
                         let convertedObject = output.transformedMetadataObject(for: faceObject, connection: connection)
                         return NSValue(cgRect: convertedObject!.bounds)
                 }
@@ -314,14 +312,15 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             videoWriterInput.isReadyForMoreMediaData  {
             // write video buffer
             videoWriterInput.append(sampleBuffer)
-            print("video buffering")
-        } else if writable,
-            output == audioDataOutput,
-            (audioWriterInput.isReadyForMoreMediaData) {
-            // write audio buffer
-            audioWriterInput?.append(sampleBuffer)
-            print("audio buffering")
+            //print("video buffering")
         }
+//        } else if writable,
+//            output == audioDataOutput,
+//            (audioWriterInput.isReadyForMoreMediaData) {
+//            // write audio buffer
+//            audioWriterInput?.append(sampleBuffer)
+//            print("audio buffering")
+//        }
         
     }
     
