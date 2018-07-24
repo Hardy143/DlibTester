@@ -8,6 +8,7 @@
 
 import UIKit
 import AVFoundation
+import Photos
 
 class VideoPreviewViewController: UIViewController {
     
@@ -41,6 +42,11 @@ class VideoPreviewViewController: UIViewController {
         performSegue(withIdentifier: "return", sender: nil)
     }
     
+    @IBAction func saveButtonTouched(_ sender: Any) {
+        
+        addVideoToLibrary()
+    }
+    
     // MARK: prepare the AVPLayer
     func prepareToPlay() {
 
@@ -53,8 +59,10 @@ class VideoPreviewViewController: UIViewController {
         player = AVPlayer(playerItem: playerItem)
         
         playerLayer = AVPlayerLayer(player: player)
-        videoPreview.layer.addSublayer(playerLayer)
         playerLayer.frame = self.videoPreview.bounds
+        playerLayer.videoGravity = AVLayerVideoGravity.resizeAspect
+        videoPreview.layer.addSublayer(playerLayer)
+        
         
     }
     
@@ -86,6 +94,24 @@ class VideoPreviewViewController: UIViewController {
                 print("Player not ready")
             }
         }
+    }
+    
+    // add video to photo library
+    func addVideoToLibrary() {
+        
+        PHPhotoLibrary.shared().performChanges({
+            PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: self.fileLocation!)
+        }, completionHandler: { success, error in
+            if success {
+                let alert = UIAlertController(title: "Success", message: "Video saved to your library", preferredStyle: .alert)
+                let action = UIAlertAction(title: "Ok", style: .default, handler: nil)
+                alert.addAction(action)
+                self.present(alert, animated: true, completion: nil)
+                print("Successful")
+            } else if let error = error {
+                print("\(error.localizedDescription)")
+            }
+        })
     }
     
     // Error message function

@@ -175,10 +175,10 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             // add video input
             videoWriterInput = AVAssetWriterInput(mediaType: AVMediaType.video, outputSettings: [
                 AVVideoCodecKey : AVVideoCodecType.h264,
-                AVVideoWidthKey : 720,
+                AVVideoWidthKey : 480,
                 AVVideoHeightKey : 853,
                 AVVideoCompressionPropertiesKey : [
-                    AVVideoAverageBitRateKey : 500000,
+                    AVVideoAverageBitRateKey : 1000000,
                 ],
                 ])
             
