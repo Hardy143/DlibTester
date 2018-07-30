@@ -13,7 +13,12 @@ import UIKit
 import CoreImage
 
 
-class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureMetadataOutputObjectsDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
+@objcMembers class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureMetadataOutputObjectsDelegate {
+
+    // Create singleton (shared instance)
+    static let shared = SessionHandler()
+    // Dlib
+    let wrapper = DlibWrapper()
     
     // AVFoundation video recording properties
     var session = AVCaptureSession()
@@ -23,10 +28,7 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     let faceQueue = DispatchQueue(label: "com.zweigraf.DisplayLiveSamples.faceQueue", attributes: [])
     var videoDataOutput = AVCaptureVideoDataOutput()
     var audioDataOutput = AVCaptureAudioDataOutput()
-    
-    // Dlib
-    let wrapper = DlibWrapper()
-    
+
     // AVAssetWriter
     var isRecording = false
     var videoWriter: AVAssetWriter!
@@ -38,28 +40,11 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
     // face detector
     var faceDetector = CIDetector(ofType: CIDetectorTypeFace, context: nil, options: [CIDetectorAccuracy: CIDetectorAccuracyHigh,
                                                                                       CIDetectorTracking: true])!
-    
     var currentMetadata: [AnyObject]
     
     override init() {
         currentMetadata = []
         super.init()
-    }
-    
-    // File Manager
-    func videoFileLocation() -> URL {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
-        let videoOutputUrl = URL(fileURLWithPath: documentsPath.appendingPathComponent("videoFile")).appendingPathExtension("mp4")
-        do {
-            if FileManager.default.fileExists(atPath: videoOutputUrl.path) {
-                try FileManager.default.removeItem(at: videoOutputUrl)
-                print("file removed")
-            }
-        } catch {
-            print(error)
-        }
-        
-        return videoOutputUrl
     }
 
     // MARK: Set up camera
@@ -123,43 +108,6 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             }
         }
     }
-
-        ////////////////////////
-        
-//        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: AVMediaType.video, position: .front) else { return }
-//
-//        let input = try! AVCaptureDeviceInput(device: device)
-//
-//        videoDataOutput.setSampleBufferDelegate(self, queue: sampleQueue)
-//
-//        let metaOutput = AVCaptureMetadataOutput()
-//        metaOutput.setMetadataObjectsDelegate(self, queue: faceQueue)
-//
-//        session.beginConfiguration()
-//
-//        if session.canAddInput(input) {
-//            session.addInput(input)
-//        }
-//        if session.canAddOutput(videoDataOutput) {
-//            session.addOutput(videoDataOutput)
-//        }
-//        if session.canAddOutput(metaOutput) {
-//            session.addOutput(metaOutput)
-//        }
-//
-//        session.commitConfiguration()
-//
-//        let settings: [AnyHashable: Any] = [kCVPixelBufferPixelFormatTypeKey as AnyHashable: Int(kCVPixelFormatType_32BGRA)]
-//        videoDataOutput.videoSettings = settings as! [String : Any]
-//
-//        // availableMetadataObjectTypes change when output is added to session.
-//        // before it is added, availableMetadataObjectTypes is empty
-//        metaOutput.metadataObjectTypes = [AVMetadataObject.ObjectType.face]
-//
-//        wrapper?.prepare()
-//
-//        session.startRunning()
-//    }
     
     func closeSession() {
         session.stopRunning()
@@ -256,31 +204,46 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
             //self?.outputUrl = url    
         }
         
+        let faceCoordinates = wrapper?.showString()
+        writeToFile(file: "FacialLandmarks.txt", text: faceCoordinates!)
+        
         session.stopRunning()
+    }
+    
+    // Create video file
+    func videoFileLocation() -> URL {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
+        let videoOutputUrl = URL(fileURLWithPath: documentsPath.appendingPathComponent("videoFile")).appendingPathExtension("mp4")
+        do {
+            if FileManager.default.fileExists(atPath: videoOutputUrl.path) {
+                try FileManager.default.removeItem(at: videoOutputUrl)
+                print("file removed")
+            }
+        } catch {
+            print(error)
+        }
+        
+        return videoOutputUrl
+    }
+    
+    // function to write a file 
+    func writeToFile(file: String, text: String) {
+        
+        if let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let fileUrl: URL = dir.appendingPathComponent(file)
+            do {
+                try text.write(to: fileUrl, atomically: false, encoding: .utf8)
+                print("File Written")
+            } catch {
+                print(error)
+            }
+        }
     }
     
     
     // MARK: AVCaptureVideoDataOutputSampleBufferDelegate
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        
-        
-        // Convert current frame to CIImage
-//        let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
-//        let attachments = CMCopyDictionaryOfAttachments(kCFAllocatorDefault, pixelBuffer!, CMAttachmentMode(kCMAttachmentMode_ShouldPropagate)) as? [String:Any]
-//        let ciImage = CIImage(cvImageBuffer: pixelBuffer!, options: attachments)
-//
-//        // Detects faces based on your ciimage
-//        let features = faceDetector.features(in: ciImage, options: [
-//            CIDetectorSmile: true,
-//            CIDetectorEyeBlink: true,
-//            ]).compactMap ({ $0 as? CIFaceFeature })
-//
-//        let bounds = faceDetector
-//
-//        // Retreive frame of your buffer
-//        let desc = CMSampleBufferGetFormatDescription(sampleBuffer)
-//        let bufferFrame = CMVideoFormatDescriptionGetCleanAperture(desc!, false)
         
         if output == videoDataOutput {
             //print("videodata")
@@ -321,7 +284,6 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
 //            audioWriterInput?.append(sampleBuffer)
 //            print("audio buffering")
 //        }
-        
     }
     
     // MARK: AVCaptureVideoDataOutputSampleBufferDelegate Frames Discarded
@@ -333,15 +295,11 @@ class SessionHandler : NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, A
         if connection.isVideoMirroringSupported {
             connection.isVideoMirrored = true
         }
-        
-        
-        
     }
     
     // MARK: AVCaptureMetadataOutputObjectsDelegate
     func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         currentMetadata = metadataObjects as [AnyObject]
-        
         
     }
 }

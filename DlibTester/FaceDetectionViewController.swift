@@ -11,9 +11,6 @@ import AVFoundation
 
 class FaceDetectionViewController: UIViewController {
     
-    let sessionHandler = SessionHandler()
-    var isRecording = false
-    
     @IBOutlet weak var preview: UIView!
     @IBOutlet weak var recordButton: UIButton!
     
@@ -32,9 +29,9 @@ class FaceDetectionViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        sessionHandler.openSession()
+        SessionHandler.shared.openSession()
         
-        let layer = sessionHandler.layer
+        let layer = SessionHandler.shared.layer
         layer.frame = preview.bounds
         preview.layer.addSublayer(layer)
         view.layoutIfNeeded()
@@ -42,26 +39,23 @@ class FaceDetectionViewController: UIViewController {
     
     
     @IBAction func buttonTouched(_ sender: Any) {
-        //sessionHandler.closeSession()
-        //self.dismiss(animated: true, completion: nil)
         
-        if !isRecording {
-            sessionHandler.start()
+        if !SessionHandler.shared.isRecording {
+            SessionHandler.shared.start()
             recordButton.setTitle("Recording", for: .normal)
+            SessionHandler.shared.isRecording = true
         } else {
-            sessionHandler.stop()
-            print("This is the url: \(sessionHandler.outputUrl)")
+            SessionHandler.shared.stop()
             recordButton.setTitle("Record", for: .normal)
             performSegue(withIdentifier: "previewVideo", sender: nil)
+            SessionHandler.shared.isRecording = false
         }
-        
-        isRecording = !isRecording
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.destination is VideoPreviewViewController {
             let preview = segue.destination as? VideoPreviewViewController
-            preview?.fileLocation = sessionHandler.outputUrl
+            preview?.fileLocation = SessionHandler.shared.outputUrl
         }
     }
     
