@@ -17,7 +17,7 @@
 using namespace std;
 
 int frameCounter = 1;
-NSString *str = @"Facial Landmark Coodinates\n";
+NSString *str = @"Facial Landmark Coordinates\n";
 
 @interface DlibWrapper ()
 
